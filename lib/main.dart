@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:bot_brain/blutooth_device_item.dart';
 
 void main() {
   runApp(MyApp());
@@ -43,7 +44,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     widget.flutterBlue.scanResults.listen((results) {
-      print("imptan - started listening");
       for (ScanResult result in results) {
         print('imptan - ${result.device.name} found! rssi: ${result.rssi}');
         _addDeviceTolist(result);
@@ -57,56 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
     widget.devicesList.sort((a, b) => b.rssi - a.rssi);
 
     for (ScanResult device in widget.devicesList) {
-      containers.add(SizedBox(
-          height: 65,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 5, bottom: 5),
-            child: ClipRRect(
-                borderRadius: BorderRadius.circular(15),
-                child: Container(
-                  color: Colors.grey[100],
-                  height: 50,
-                  padding: const EdgeInsets.all(10),
-                  child: Row(
-                    children: <Widget>[
-                      Container(
-                          height: 75,
-                          width: 75,
-                          decoration: BoxDecoration(
-                              shape: BoxShape.circle, color: Colors.grey[500]),
-                          child: Center(
-                              child: Text(
-                            "${device.rssi}",
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 15),
-                          ))),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(device.device.name == ''
-                                ? '(unknown device)'
-                                : device.device.name),
-                            Text(
-                              device.device.id.toString(),
-                              style: TextStyle(color: Colors.grey[500]),
-                            ),
-                          ],
-                        ),
-                      ),
-                      TextButton(
-                        child: const Text(
-                          'Connect',
-                          style: TextStyle(color: Colors.blue),
-                        ),
-                        onPressed: () async {
-                          widget.flutterBlue.stopScan();
-                        },
-                      ),
-                    ],
-                  ),
-                )),
-          )));
+      containers.add(BluetoothDeviceItem(device));
     }
 
     return ListView(
