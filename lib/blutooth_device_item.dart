@@ -22,10 +22,25 @@ class BluetoothDeviceItemState extends State<BluetoothDeviceItem> {
   var _isConnecting = false;
   var _isConnected = false;
 
+  Future<void> connect(ScanResult result) async {
+    try {
+      print("Connected to device: ${result.device.name}");
+      await result.device.connect().then((value) {});
+      //TODO stop scan
+      Navigator.push(context,
+          MaterialPageRoute(builder: (context) => RobotPage(result.device)));
+    } on PlatformException catch (e) {
+      print("imptan - error");
+      if (e.code != 'already_connected') {
+        rethrow;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-        height: 65,
+        height: 70,
         child: Padding(
           padding: const EdgeInsets.only(top: 5, bottom: 5),
           child: ClipRRect(
@@ -61,42 +76,27 @@ class BluetoothDeviceItemState extends State<BluetoothDeviceItem> {
                         ],
                       ),
                     ),
-                    TextButton(
-                      child: _isConnecting
-                          ? const CircularProgressIndicator()
-                          : Text(
+                    _isConnecting
+                        ? const CircularProgressIndicator()
+                        : TextButton(
+                            child: Text(
                               _isConnected ? 'Connected' : 'Connect',
                               style: const TextStyle(color: Colors.blue),
                             ),
-                      onPressed: () async {
-                        setState(() {
-                          _isConnecting = true;
-                        });
-                        connect(device);
-                        setState(() {
-                          _isConnected = true;
-                        });
-                        // widget.flutterBlue.stopScan();
-                      },
-                    ),
+                            onPressed: () async {
+                              setState(() {
+                                _isConnecting = true;
+                              });
+                              connect(device);
+                              setState(() {
+                                _isConnected = true;
+                              });
+                              // widget.flutterBlue.stopScan();
+                            },
+                          ),
                   ],
                 ),
               )),
         ));
-  }
-
-  Future<void> connect(ScanResult result) async {
-    try {
-      await result.device.connect().then((value) {
-        print("Connected to device: ${result.device.name}");
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => RobotPage(result.device)));
-      });
-    } on PlatformException catch (e) {
-      print("imptan - error");
-      if (e.code != 'already_connected') {
-        rethrow;
-      }
-    }
   }
 }

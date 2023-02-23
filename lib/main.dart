@@ -45,7 +45,6 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     widget.flutterBlue.scanResults.listen((results) {
       for (ScanResult result in results) {
-        print('imptan - ${result.device.name} found! rssi: ${result.rssi}');
         _addDeviceTolist(result);
       }
     });
