@@ -6,7 +6,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 class BluetoothDeviceItem extends StatefulWidget {
   final ScanResult device;
 
-  const BluetoothDeviceItem(this.device, {super.key});
+  const BluetoothDeviceItem(this.device);
 
   @override
   State<StatefulWidget> createState() {

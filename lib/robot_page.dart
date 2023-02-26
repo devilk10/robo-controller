@@ -1,10 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class RobotPage extends StatefulWidget {
   BluetoothDevice device;
 
-  RobotPage(this.device, {super.key});
+  RobotPage(this.device);
 
   final List<String> inputStream = <String>[];
 
@@ -18,7 +21,14 @@ class RobotPageState extends State<RobotPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.device.name)),
+      appBar: AppBar(title: Text(widget.device.name), actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.add),
+          onPressed: () {
+            listenStream();
+          },
+        ),
+      ]),
       body: ListView.builder(
         itemCount: widget.inputStream.length,
         itemBuilder: (context, index) {
@@ -52,7 +62,7 @@ class RobotPageState extends State<RobotPage> {
   @override
   void initState() {
     super.initState();
-    listenStream();
+    // listenStream();
   }
 
   Future<void> listenStream() async {
@@ -60,21 +70,17 @@ class RobotPageState extends State<RobotPage> {
 
     for (BluetoothService service in services) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
-        List<int> value = await characteristic.read();
-        print("imptan characteristic :  $value");
-
-        for (BluetoothDescriptor d in characteristic.descriptors) {
-          List<int> value = await d.read();
-          print("imptan descriptors: $value");
-        }
-        characteristic.setNotifyValue(true);
-        characteristic.value.listen((value) {
-          // process the data from the input stream
-          setState(() {
-            widget.inputStream.add(value.toString());
+        if (characteristic.uuid.toString() ==
+            '0000ffe1-0000-1000-8000-00805f9b34fb') {
+          await characteristic.setNotifyValue(true);
+          StreamSubscription notificationStream;
+          notificationStream = characteristic.value.listen((value) {
+            setState(() {
+              widget.inputStream.add(utf8.decode(value));
+            });
+            print("imptan - input is -----> ${utf8.decode(value)}");
           });
-          print("imptan Received data: $value");
-        });
+        }
       }
     }
   }
