@@ -22,10 +22,10 @@ class RobotPageState extends State<RobotPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.device.name), actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.add),
+        TextButton(
+          child: Text("Connect"),
           onPressed: () {
-            listenStream();
+            // listenStream();
           },
         ),
       ]),
@@ -62,7 +62,7 @@ class RobotPageState extends State<RobotPage> {
   @override
   void initState() {
     super.initState();
-    // listenStream();
+    listenStream();
   }
 
   Future<void> listenStream() async {
