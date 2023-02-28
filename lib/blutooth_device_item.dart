@@ -5,22 +5,17 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class BluetoothDeviceItem extends StatefulWidget {
   final ScanResult device;
-
-  const BluetoothDeviceItem(this.device);
+  BluetoothDeviceItem(this.device);
 
   @override
-  State<StatefulWidget> createState() {
-    return BluetoothDeviceItemState(device);
-  }
+  State<StatefulWidget> createState() => BluetoothDeviceItemState(device);
 }
 
 class BluetoothDeviceItemState extends State<BluetoothDeviceItem> {
   final ScanResult device;
 
   BluetoothDeviceItemState(this.device);
-
   var _isConnecting = false;
-  var _isConnected = false;
 
   Future<void> connect(ScanResult result) async {
     try {
@@ -80,7 +75,7 @@ class BluetoothDeviceItemState extends State<BluetoothDeviceItem> {
                         ? const CircularProgressIndicator()
                         : TextButton(
                             child: Text(
-                              _isConnected ? 'Connected' : 'Connect',
+                              _isConnecting ? "" : "Connect",
                               style: const TextStyle(color: Colors.blue),
                             ),
                             onPressed: () async {
@@ -89,9 +84,8 @@ class BluetoothDeviceItemState extends State<BluetoothDeviceItem> {
                               });
                               connect(device);
                               setState(() {
-                                _isConnected = true;
+                                _isConnecting = false;
                               });
-                              // widget.flutterBlue.stopScan();
                             },
                           ),
                   ],
