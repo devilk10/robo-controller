@@ -69,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
     startScanningDevices();
   }
 
-  ListView _buildListViewOfDevices() {
+  RefreshIndicator _buildListViewOfDevices() {
     List<Widget> containers = <Widget>[];
     devicesList.sort((a, b) => b.rssi - a.rssi);
 
@@ -77,22 +77,20 @@ class _MyHomePageState extends State<MyHomePage> {
       containers.add(BluetoothDeviceItem(device));
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(8),
-      children: <Widget>[
-        ...containers,
-      ],
-    );
+    return RefreshIndicator(
+        onRefresh: startScanningDevices,
+        child: ListView(
+          padding: const EdgeInsets.all(8),
+          children: <Widget>[
+            ...containers,
+          ],
+        ));
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: const Text("Bot Brain"),
-        actions: [
-          IconButton(
-              onPressed: startScanningDevices, icon: const Icon(Icons.refresh))
-        ],
       ),
       body: _bluetoothEnabled
           ? _buildListViewOfDevices()
@@ -103,11 +101,13 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ));
 
-  void startScanningDevices() {
-    checkBluetoothPermission();
+  Future<void> startScanningDevices() async {
     setState(() {
       devicesList.clear();
     });
+    checkBluetoothPermission();
+    // Todo I know this is not correct, but this is fixing a bug of duplicate device entry
+    await Future.delayed(Duration(seconds: 2));
     widget.flutterBlue.startScan(timeout: const Duration(seconds: 5));
     widget.flutterBlue.scanResults.listen((results) {
       for (var element in results) {
