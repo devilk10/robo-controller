@@ -15,9 +15,14 @@ class RobotPage extends StatefulWidget {
 
 class RobotPageState extends State<RobotPage> {
   final TextEditingController _textController = TextEditingController();
-  final List<String> inputStream = <String>[];
+  final List<String> _inputStream = <String>[];
 
   BluetoothDevice device;
+
+  final ScrollController _scrollController = ScrollController();
+
+  BluetoothCharacteristic? _characteristic;
+
   RobotPageState(this.device);
 
   @override
@@ -42,7 +47,8 @@ class RobotPageState extends State<RobotPage> {
               children: [
                 Flexible(
                     child: ListView.builder(
-                  itemCount: inputStream.length,
+                  controller: _scrollController,
+                  itemCount: _inputStream.length,
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(
@@ -58,7 +64,7 @@ class RobotPageState extends State<RobotPage> {
                           ),
                         ),
                         child: Text(
-                          inputStream[index],
+                          _inputStream[index],
                           style: const TextStyle(
                             fontSize: 16.0,
                             color: Colors.black,
@@ -82,14 +88,14 @@ class RobotPageState extends State<RobotPage> {
                                 borderRadius: BorderRadius.circular(20.0),
                               ),
                               hintText: "Type your command ..."),
+                          // Todo remove expanded if send button is not required
+                          onSubmitted: (String text) => {
+                            setState(() {
+                              writeDataToDevice(text);
+                              _textController.clear();
+                            })
+                          },
                         )),
-                        IconButton(
-                            icon: const Icon(Icons.send),
-                            onPressed: () => {
-                                  setState(() {
-                                    _textController.clear();
-                                  })
-                                })
                       ],
                     ),
                   ),
@@ -98,10 +104,21 @@ class RobotPageState extends State<RobotPage> {
             )));
   }
 
+  Future<void> writeDataToDevice(String text) async {
+    List<int> messageBytes = utf8.encode(text);
+    print("imptan --> writing $text on ${_characteristic?.uuid} ");
+    _characteristic?.write(messageBytes);
+  }
+
   @override
   void initState() {
     super.initState();
-    listenStream();
+    subscribeStream();
+  }
+
+  Future<void> subscribeStream() async {
+    var hasCharacteristic = await setCharacteristic();
+    hasCharacteristic ? listenCharacteristicData(_characteristic!) : null;
   }
 
   Future<bool> _onBackPressed() {
@@ -128,25 +145,42 @@ class RobotPageState extends State<RobotPage> {
     ).then((value) => value ?? false);
   }
 
-  Future<void> listenStream() async {
-    List<BluetoothService> services = await device.discoverServices();
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
+  Future<bool> setCharacteristic() async {
+    List<BluetoothService> services = await device.discoverServices();
     for (BluetoothService service in services) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
         if (characteristic.uuid.toString() ==
             '0000ffe1-0000-1000-8000-00805f9b34fb') {
-          await characteristic.setNotifyValue(true);
-          StreamSubscription notificationStream;
-          notificationStream = characteristic.value.listen((value) {
-            var decodeValue = utf8.decode(value);
-            if (decodeValue.isNotEmpty) {
-              setState(() {
-                inputStream.add(decodeValue);
-              });
-            }
-          });
+          _characteristic = characteristic;
+          return true;
         }
       }
+    }
+    return false;
+  }
+
+  Future<void> listenCharacteristicData(
+      BluetoothCharacteristic characteristic) async {
+    {
+      await characteristic.setNotifyValue(true);
+      StreamSubscription notificationStream;
+      notificationStream = characteristic.value.listen((value) {
+        var decodeValue = utf8.decode(value);
+        print("imptan --->>>>>>> $decodeValue");
+        if (decodeValue.isNotEmpty) {
+          setState(() {
+            _inputStream.add(decodeValue);
+            _scrollController
+                .jumpTo(_scrollController.position.maxScrollExtent + 1);
+          });
+        }
+      });
     }
   }
 }
