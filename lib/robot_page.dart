@@ -9,16 +9,16 @@ class RobotPage extends StatefulWidget {
 
   RobotPage(this.device);
 
-  final List<String> inputStream = <String>[];
-
   @override
-  State<StatefulWidget> createState() {
-    return RobotPageState();
-  }
+  State<StatefulWidget> createState() => RobotPageState(device);
 }
 
 class RobotPageState extends State<RobotPage> {
   final TextEditingController _textController = TextEditingController();
+  final List<String> inputStream = <String>[];
+
+  BluetoothDevice device;
+  RobotPageState(this.device);
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class RobotPageState extends State<RobotPage> {
         onWillPop: _onBackPressed,
         child: Scaffold(
             appBar: AppBar(
-              title: Text(widget.device.name),
+              title: Text(device.name),
               actions: <Widget>[
                 TextButton(
                   child: Text("Connect"),
@@ -42,7 +42,7 @@ class RobotPageState extends State<RobotPage> {
               children: [
                 Flexible(
                     child: ListView.builder(
-                  itemCount: widget.inputStream.length,
+                  itemCount: inputStream.length,
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(
@@ -58,7 +58,7 @@ class RobotPageState extends State<RobotPage> {
                           ),
                         ),
                         child: Text(
-                          widget.inputStream[index],
+                          inputStream[index],
                           style: const TextStyle(
                             fontSize: 16.0,
                             color: Colors.black,
@@ -117,7 +117,7 @@ class RobotPageState extends State<RobotPage> {
           ),
           TextButton(
             onPressed: () {
-              widget.device.disconnect();
+              device.disconnect();
               Navigator.pop(context, true);
               return Navigator.pop(context, true);
             },
@@ -129,7 +129,7 @@ class RobotPageState extends State<RobotPage> {
   }
 
   Future<void> listenStream() async {
-    List<BluetoothService> services = await widget.device.discoverServices();
+    List<BluetoothService> services = await device.discoverServices();
 
     for (BluetoothService service in services) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
@@ -141,7 +141,7 @@ class RobotPageState extends State<RobotPage> {
             var decodeValue = utf8.decode(value);
             if (decodeValue.isNotEmpty) {
               setState(() {
-                widget.inputStream.add(decodeValue);
+                inputStream.add(decodeValue);
               });
             }
           });
