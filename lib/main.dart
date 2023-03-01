@@ -22,7 +22,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   final FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
-  final List<ScanResult> devicesList = <ScanResult>[];
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -31,6 +30,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   _MyHomePageState();
 
+  final List<ScanResult> devicesList = <ScanResult>[];
   bool _bluetoothEnabled = false;
 
   void checkBluetoothPermission() async {
@@ -66,13 +66,14 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     checkBluetoothPermission();
+    startScanningDevices();
   }
 
   ListView _buildListViewOfDevices() {
     List<Widget> containers = <Widget>[];
-    widget.devicesList.sort((a, b) => b.rssi - a.rssi);
+    devicesList.sort((a, b) => b.rssi - a.rssi);
 
-    for (ScanResult device in widget.devicesList) {
+    for (ScanResult device in devicesList) {
       containers.add(BluetoothDeviceItem(device));
     }
 
@@ -105,14 +106,14 @@ class _MyHomePageState extends State<MyHomePage> {
   void startScanningDevices() {
     checkBluetoothPermission();
     setState(() {
-      widget.devicesList.clear();
+      devicesList.clear();
     });
     widget.flutterBlue.startScan(timeout: const Duration(seconds: 5));
     widget.flutterBlue.scanResults.listen((results) {
       for (var element in results) {
-        if (!widget.devicesList.contains(element)) {
+        if (!devicesList.contains(element)) {
           setState(() {
-            widget.devicesList.add(element);
+            devicesList.add(element);
           });
         }
       }
