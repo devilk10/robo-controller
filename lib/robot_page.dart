@@ -18,53 +18,84 @@ class RobotPage extends StatefulWidget {
 }
 
 class RobotPageState extends State<RobotPage> {
+  final TextEditingController _textController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
         onWillPop: _onBackPressed,
         child: Scaffold(
-          appBar: AppBar(
-            title: Text(widget.device.name),
-            actions: <Widget>[
-              TextButton(
-                child: Text("Connect"),
-                onPressed: () {
-                  // listenStream();
-                },
-              ),
-            ],
-            leading: GestureDetector(
-                child: Icon(Icons.arrow_back),
-                onTap: _onBackPressed ),
-          ),
-          body: ListView.builder(
-            itemCount: widget.inputStream.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.only(
-                    left: 15, top: 3, bottom: 3, right: 15),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey,
-                        width: 1.0,
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    widget.inputStream[index],
-                    style: const TextStyle(
-                      fontSize: 16.0,
-                      color: Colors.black,
-                    ),
-                  ),
+            appBar: AppBar(
+              title: Text(widget.device.name),
+              actions: <Widget>[
+                TextButton(
+                  child: Text("Connect"),
+                  onPressed: () {
+                    // listenStream();
+                  },
                 ),
-              );
-            },
-          ),
-        ));
+              ],
+              leading: GestureDetector(
+                  child: Icon(Icons.arrow_back), onTap: _onBackPressed),
+            ),
+            body: Column(
+              children: [
+                Flexible(
+                    child: ListView.builder(
+                  itemCount: widget.inputStream.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                          left: 15, top: 3, bottom: 3, right: 15),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey,
+                              width: 1.0,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          widget.inputStream[index],
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                )),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: TextField(
+                          controller: _textController,
+                          decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20.0),
+                              ),
+                              hintText: "Type your command ..."),
+                        )),
+                        IconButton(
+                            icon: const Icon(Icons.send),
+                            onPressed: () => {
+                                  setState(() {
+                                    _textController.clear();
+                                  })
+                                })
+                      ],
+                    ),
+                  ),
+                )
+              ],
+            )));
   }
 
   @override
@@ -107,10 +138,12 @@ class RobotPageState extends State<RobotPage> {
           await characteristic.setNotifyValue(true);
           StreamSubscription notificationStream;
           notificationStream = characteristic.value.listen((value) {
-            setState(() {
-              widget.inputStream.add(utf8.decode(value));
-            });
-            print("imptan - input is -----> ${utf8.decode(value)}");
+            var decodeValue = utf8.decode(value);
+            if (decodeValue.isNotEmpty) {
+              setState(() {
+                widget.inputStream.add(decodeValue);
+              });
+            }
           });
         }
       }

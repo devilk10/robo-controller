@@ -106,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
       devicesList.clear();
     });
     checkBluetoothPermission();
-    // Todo I know this is not correct, but this is fixing a bug of duplicate device entry
+    // Fixme I know this is not correct, but this is fixing a bug of duplicate device entry
     await Future.delayed(Duration(seconds: 2));
     widget.flutterBlue.startScan(timeout: const Duration(seconds: 5));
     widget.flutterBlue.scanResults.listen((results) {
