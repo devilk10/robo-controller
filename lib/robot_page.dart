@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'message.dart';
+import 'message_item.dart';
 
 class RobotPage extends StatefulWidget {
   BluetoothDevice device;
@@ -44,72 +44,44 @@ class RobotPageState extends State<RobotPage> {
                     child: ListView.builder(
                   controller: _scrollController,
                   itemCount: _inputStream.length,
-                  itemBuilder: (context, index) {
-                    return messageItem(_inputStream[index]);
-                  },
+                  itemBuilder: (context, index) =>
+                      MessageItem(_inputStream[index]),
                 )),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    margin: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                            child: TextField(
-                          controller: _textController,
-                          decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                              ),
-                              hintText: "Type your command ..."),
-                          // Todo remove expanded if send button is not required
-                          onSubmitted: (String text) => {
-                            setState(() {
-                              _inputStream.add(Sender(text));
-                              writeDataToDevice(text);
-                              _textController.clear();
-                            })
-                          },
-                        )),
-                      ],
-                    ),
-                  ),
-                )
+                sendMessageBox()
               ],
             )));
   }
 
-  Widget messageItem(Message item) {
-    return Padding(
-        padding: const EdgeInsets.only(left: 10, top: 2, bottom: 2, right: 10),
-        child: Container(
-            padding: const EdgeInsets.all(3),
-            child: (item is Receiver)
-                ? receivedMessage(item)
-                : sentMessage(item)));
-  }
-
-  Bubble receivedMessage(Message item) {
-    return Bubble(
-      color: Colors.grey[300],
-      alignment: Alignment.topLeft,
-      nip: BubbleNip.leftBottom,
-      child: Text(item.value),
+  Align sendMessageBox() {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        margin: const EdgeInsets.all(16.0),
+        child: TextField(
+          controller: _textController,
+          decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              hintText: "Type your command ..."),
+          onSubmitted: (String text) => sendMessage(text),
+        ),
+      ),
     );
   }
 
-  Bubble sentMessage(Message item) {
-    return Bubble(
-      color: Colors.blue[400],
-      alignment: Alignment.topRight,
-      nip: BubbleNip.rightBottom,
-      child: Text(item.value, style: TextStyle(color: Colors.white),),
-    );
+  void sendMessage(String text) {
+    return setState(() {
+      _textController.clear();
+      addToLocalList(Sender(text));
+      writeDataToDevice(text);
+    });
   }
 
   Future<void> writeDataToDevice(String text) async {
+    print(
+        "imptan --->>> writing $text on ${_characteristic?.uuid.toString().substring(4, 8)} ");
     List<int> messageBytes = utf8.encode(text);
-    print("imptan --> writing $text on ${_characteristic?.uuid} ");
     await _characteristic?.write(messageBytes);
   }
 
@@ -127,25 +99,29 @@ class RobotPageState extends State<RobotPage> {
   Future<bool> _onBackPressed() {
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-            'This will disconnect the device, do you really want to exit ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () {
-              device.disconnect();
-              Navigator.pop(context, true);
-              return Navigator.pop(context, true);
-            },
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
+      builder: (context) => alertDialog(context),
     ).then((value) => value ?? false);
+  }
+
+  AlertDialog alertDialog(BuildContext context) {
+    return AlertDialog(
+      title: const Text(
+          'This will disconnect the device, do you really want to exit ?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('No'),
+        ),
+        TextButton(
+          onPressed: () {
+            device.disconnect();
+            Navigator.pop(context, true);
+            return Navigator.pop(context, true);
+          },
+          child: const Text('Yes'),
+        ),
+      ],
+    );
   }
 
   @override
@@ -160,6 +136,8 @@ class RobotPageState extends State<RobotPage> {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
         if (characteristic.uuid.toString() ==
             '0000ffe1-0000-1000-8000-00805f9b34fb') {
+          print(
+              "imptan --->>> connected to ${characteristic.uuid.toString().substring(4, 8)}");
           _characteristic = characteristic;
           return true;
         }
@@ -175,15 +153,19 @@ class RobotPageState extends State<RobotPage> {
       StreamSubscription notificationStream;
       notificationStream = characteristic.value.listen((value) {
         var decodeValue = utf8.decode(value);
-        print("imptan --->>>>>>> $decodeValue");
+        print(
+            "imptan --->>> received from ${characteristic.uuid.toString().substring(4, 8)} - $decodeValue");
         if (decodeValue.isNotEmpty) {
-          setState(() {
-            _inputStream.add(Receiver(decodeValue));
-            _scrollController
-                .jumpTo(_scrollController.position.maxScrollExtent + 1);
-          });
+          addToLocalList(Receiver(decodeValue));
         }
       });
     }
+  }
+
+  void addToLocalList(Message message) {
+    setState(() {
+      _inputStream.add(message);
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent + 1);
+    });
   }
 }
