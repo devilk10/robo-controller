@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
@@ -35,8 +36,7 @@ class RobotPageState extends State<RobotPage> {
             appBar: AppBar(
               title: Text(device.name),
               leading: GestureDetector(
-                  onTap: _onBackPressed,
-                  child: const Icon(Icons.arrow_back)),
+                  onTap: _onBackPressed, child: const Icon(Icons.arrow_back)),
             ),
             body: Column(
               children: [
@@ -45,31 +45,7 @@ class RobotPageState extends State<RobotPage> {
                   controller: _scrollController,
                   itemCount: _inputStream.length,
                   itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(
-                          left: 15, top: 3, bottom: 3, right: 15),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: const BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: Colors.grey,
-                              width: 1.0,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          _inputStream[index].value,
-                          style: (_inputStream[index] is Sender)? const TextStyle(
-                            fontSize: 16.0,
-                            color: Colors.green,
-                          ) : const TextStyle(
-                            fontSize: 16.0,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    );
+                    return messageItem(_inputStream[index]);
                   },
                 )),
                 Align(
@@ -103,11 +79,38 @@ class RobotPageState extends State<RobotPage> {
             )));
   }
 
+  Widget messageItem(Message item) {
+    return Padding(
+        padding: const EdgeInsets.only(left: 10, top: 2, bottom: 2, right: 10),
+        child: Container(
+            padding: const EdgeInsets.all(3),
+            child: (item is Receiver)
+                ? receivedMessage(item)
+                : sentMessage(item)));
+  }
+
+  Bubble receivedMessage(Message item) {
+    return Bubble(
+      color: Colors.grey[300],
+      alignment: Alignment.topLeft,
+      nip: BubbleNip.leftBottom,
+      child: Text(item.value),
+    );
+  }
+
+  Bubble sentMessage(Message item) {
+    return Bubble(
+      color: Colors.blue[400],
+      alignment: Alignment.topRight,
+      nip: BubbleNip.rightBottom,
+      child: Text(item.value, style: TextStyle(color: Colors.white),),
+    );
+  }
+
   Future<void> writeDataToDevice(String text) async {
     List<int> messageBytes = utf8.encode(text);
     print("imptan --> writing $text on ${_characteristic?.uuid} ");
     await _characteristic?.write(messageBytes);
-    print("Message sent to HM10: $messageBytes");
   }
 
   @override
