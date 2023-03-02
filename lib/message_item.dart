@@ -1,6 +1,7 @@
 import 'package:bot_brain/message.dart';
 import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 class MessageItem extends StatelessWidget {
   final Message message;
@@ -19,23 +20,37 @@ class MessageItem extends StatelessWidget {
   }
 
   Widget receivedMessage(Message item) {
-    return Bubble(
-      color: Colors.grey[300],
-      alignment: Alignment.topLeft,
-      nip: BubbleNip.leftBottom,
-      child: Text(item.value),
+    return Row(
+      children: [
+        Bubble(
+          color: Colors.grey[300],
+          alignment: Alignment.topLeft,
+          nip: BubbleNip.leftBottom,
+          child: Text(item.value),
+        ),
+        Text(
+          DateFormat('HH:mm').format(message.dateTime),
+          style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+        )
+      ],
     );
   }
 
   Widget sentMessage(Message item) {
-    return Bubble(
-      color: Colors.blue[400],
-      alignment: Alignment.topRight,
-      nip: BubbleNip.rightBottom,
-      child: Text(
-        item.value,
-        style: TextStyle(color: Colors.white),
+    return Row(textDirection: TextDirection.rtl, children: [
+      Text(
+        DateFormat('HH:mm').format(message.dateTime),
+        style: TextStyle(fontSize: 10, color: Colors.grey[400]),
       ),
-    );
+      Bubble(
+        color: Colors.blue[400],
+        alignment: Alignment.topRight,
+        nip: BubbleNip.rightBottom,
+        child: Text(
+          item.value,
+          style: TextStyle(color: Colors.white),
+        ),
+      )
+    ]);
   }
 }

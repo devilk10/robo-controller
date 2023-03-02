@@ -73,7 +73,7 @@ class RobotPageState extends State<RobotPage> {
   void sendMessage(String text) {
     return setState(() {
       _textController.clear();
-      addToLocalList(Sender(text));
+      addToLocalList(Sender(text, DateTime.now()));
       writeDataToDevice(text);
     });
   }
@@ -156,7 +156,7 @@ class RobotPageState extends State<RobotPage> {
         print(
             "imptan --->>> received from ${characteristic.uuid.toString().substring(4, 8)} - $decodeValue");
         if (decodeValue.isNotEmpty) {
-          addToLocalList(Receiver(decodeValue));
+          addToLocalList(Receiver(decodeValue, DateTime.now()));
         }
       });
     }
