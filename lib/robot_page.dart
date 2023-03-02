@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
+import 'message.dart';
+
 class RobotPage extends StatefulWidget {
   BluetoothDevice device;
 
@@ -15,7 +17,7 @@ class RobotPage extends StatefulWidget {
 
 class RobotPageState extends State<RobotPage> {
   final TextEditingController _textController = TextEditingController();
-  final List<String> _inputStream = <String>[];
+  final List<Message> _inputStream = <Message>[];
 
   BluetoothDevice device;
 
@@ -32,16 +34,9 @@ class RobotPageState extends State<RobotPage> {
         child: Scaffold(
             appBar: AppBar(
               title: Text(device.name),
-              actions: <Widget>[
-                TextButton(
-                  child: Text("Connect"),
-                  onPressed: () {
-                    // listenStream();
-                  },
-                ),
-              ],
               leading: GestureDetector(
-                  child: Icon(Icons.arrow_back), onTap: _onBackPressed),
+                  onTap: _onBackPressed,
+                  child: const Icon(Icons.arrow_back)),
             ),
             body: Column(
               children: [
@@ -64,8 +59,11 @@ class RobotPageState extends State<RobotPage> {
                           ),
                         ),
                         child: Text(
-                          _inputStream[index],
-                          style: const TextStyle(
+                          _inputStream[index].value,
+                          style: (_inputStream[index] is Sender)? const TextStyle(
+                            fontSize: 16.0,
+                            color: Colors.green,
+                          ) : const TextStyle(
                             fontSize: 16.0,
                             color: Colors.black,
                           ),
@@ -91,6 +89,7 @@ class RobotPageState extends State<RobotPage> {
                           // Todo remove expanded if send button is not required
                           onSubmitted: (String text) => {
                             setState(() {
+                              _inputStream.add(Sender(text));
                               writeDataToDevice(text);
                               _textController.clear();
                             })
@@ -107,7 +106,8 @@ class RobotPageState extends State<RobotPage> {
   Future<void> writeDataToDevice(String text) async {
     List<int> messageBytes = utf8.encode(text);
     print("imptan --> writing $text on ${_characteristic?.uuid} ");
-    _characteristic?.write(messageBytes);
+    await _characteristic?.write(messageBytes);
+    print("Message sent to HM10: $messageBytes");
   }
 
   @override
@@ -175,7 +175,7 @@ class RobotPageState extends State<RobotPage> {
         print("imptan --->>>>>>> $decodeValue");
         if (decodeValue.isNotEmpty) {
           setState(() {
-            _inputStream.add(decodeValue);
+            _inputStream.add(Receiver(decodeValue));
             _scrollController
                 .jumpTo(_scrollController.position.maxScrollExtent + 1);
           });
