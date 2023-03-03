@@ -73,7 +73,7 @@ class RobotPageState extends State<RobotPage> {
   void sendMessage(String text) {
     return setState(() {
       _textController.clear();
-      addToLocalList(Sender(text, DateTime.now()));
+      addToLocalList(Sender(text, DateTime.now(), MessageType.COMMAND));
       writeDataToDevice(text);
     });
   }
@@ -156,10 +156,25 @@ class RobotPageState extends State<RobotPage> {
         print(
             "imptan --->>> received from ${characteristic.uuid.toString().substring(4, 8)} - $decodeValue");
         if (decodeValue.isNotEmpty) {
-          addToLocalList(Receiver(decodeValue, DateTime.now()));
+          addToLocalList(messageHandler(decodeValue)!);
         }
       });
     }
+  }
+
+  Receiver? messageHandler(String decodedMessage) {
+    var type = decodedMessage.substring(
+        decodedMessage.lastIndexOf("_") + 1, decodedMessage.length);
+    String trimmedText = decodedMessage.substring(0, decodedMessage.length - 2);
+    switch (type) {
+      case 'D':
+        return Receiver(trimmedText, DateTime.now(), MessageType.DATA);
+      case 'E':
+        return Receiver(trimmedText, DateTime.now(), MessageType.ERROR_LOG);
+      case 'G':
+        return Receiver(trimmedText, DateTime.now(), MessageType.DEBUG_LOG);
+    }
+    return null;
   }
 
   void addToLocalList(Message message) {

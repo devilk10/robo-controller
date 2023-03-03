@@ -8,6 +8,12 @@ class MessageItem extends StatelessWidget {
 
   MessageItem(this.message);
 
+  Map<MessageType, TextStyle> messageStyleMapper = {
+    MessageType.DATA: TextStyle(color: Colors.green[400]),
+    MessageType.ERROR_LOG: TextStyle(color: Colors.red[400]),
+    MessageType.DEBUG_LOG: TextStyle(color: Colors.black),
+  };
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -26,7 +32,7 @@ class MessageItem extends StatelessWidget {
           color: Colors.grey[300],
           alignment: Alignment.topLeft,
           nip: BubbleNip.leftBottom,
-          child: Text(item.value),
+          child: Text(item.value, style: messageStyleMapper[item.type]),
         ),
         Text(
           DateFormat('HH:mm').format(message.dateTime),
